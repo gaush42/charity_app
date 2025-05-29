@@ -1,19 +1,40 @@
-const { User, Organisation } = require('../models');
+const { User, Organization, Project } = require('../model');
 
-exports.getAllUsers = async (req, res) => {
-  const users = await User.findAll({ attributes: ['id', 'name', 'email', 'isAdmin'] });
-  res.json(users);
+// Get all organizations pending approval
+exports.getPendingOrganizations = async (req, res) => {
+  try {
+    const orgs = await Organization.findAll({ where: { isApproved: false } });
+    res.json(orgs);
+  } catch (err) {
+    console.log(err);
+    res.status(500).json({ message: 'Server error', error: err.message });
+  }
 };
 
-exports.getAllOrganisations = async (req, res) => {
-  const orgs = await Organisation.findAll({ include: ['owner'] });
-  res.json(orgs);
+// Approve a charity
+exports.approveOrganization = async (req, res) => {
+  try {
+    const org = await Organization.findByPk(req.params.id);
+    if (!org) return res.status(404).json({ message: 'Organization not found' });
+
+    org.isApproved = true;
+    await org.save();
+
+    res.json({ message: 'Organization approved', org });
+  } catch (err) {
+    res.status(500).json({ message: 'Server error', error: err.message });
+  }
 };
 
-exports.approveOrganisation = async (req, res) => {
-  const org = await Organisation.findByPk(req.params.id);
-  if (!org) return res.status(404).json({ message: 'Organisation not found' });
+// Reject (delete) a charity
+exports.rejectOrganization = async (req, res) => {
+  try {
+    const org = await Organization.findByPk(req.params.id);
+    if (!org) return res.status(404).json({ message: 'Organization not found' });
 
-  await org.update({ isApproved: true });
-  res.json({ message: 'Organisation approved' });
+    await org.destroy();
+    res.json({ message: 'Organization rejected and removed' });
+  } catch (err) {
+    res.status(500).json({ message: 'Server error', error: err.message });
+  }
 };

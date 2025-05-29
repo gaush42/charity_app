@@ -2,12 +2,6 @@ const {DataTypes} = require('sequelize')
 const sequelize = require('../config/db')
 
 const User = sequelize.define('User', {
-    id:{
-        type: DataTypes.INTEGER,
-        autoIncrement: true,
-        allowNull: false,
-        primaryKey: true,
-    },
     fullname:{
         type: DataTypes.STRING,
         allowNull: false
@@ -21,6 +15,10 @@ const User = sequelize.define('User', {
     password:{
         type: DataTypes.STRING,
         allowNull: false
+    },
+    isAdmin:{
+        type: DataTypes.BOOLEAN, 
+        defaultValue: false
     }
 })
 module.exports = User

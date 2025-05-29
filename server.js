@@ -1,28 +1,42 @@
 const express = require('express')
+const path = require('path')
 require('dotenv').config()
 const sequelize = require('./config/db')
+
+const authRoute = require('./routes/authRoutes')
+const adminRoute = require('./routes/adminRoutes')
+const projectRoute = require('./routes/projectsRoutes')
+const donationRoute = require('./routes/donationRoutes')
+const userRoute = require('./routes/userRoutes')
+const OrgRoute = require('./routes/organizationRoutes')
 
 const app = express()
 
 const PORT = process.env.PORT || 3000
 
-const authRoutes = require('./routes/auth.routes');
-const userRoutes = require('./routes/user.routes');
-const orgRoutes = require('./routes/organisation.routes');
-const donationRoutes = require('./routes/donation.routes');
-const adminRoutes = require('./routes/admin.routes');
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true}))
 
-app.use('/api/auth', authRoutes);
-app.use('/api/user', userRoutes);
-app.use('/api/organisations', orgRoutes);
-app.use('/api/donations', donationRoutes);
-app.use('/api/admin', adminRoutes);
+app.use((req, res, next) => {
+  console.log(`[${req.method}] ${req.originalUrl}`);
+  next();
+});
 
-app.get('/', (req, res) => res.send('Charity Donation Platform API Running'));
+//app.get('/', (req, res) => res.send('Charity Donation Platform API Running'));
+app.use('/api/auth', authRoute)
+app.use('/api/admin', adminRoute)
+app.use('/api/project', projectRoute)
+app.use('/api/organization', OrgRoute)
+app.use('/api/donation', donationRoute)
+app.use('/api/user', userRoute)
 
+
+//app.use(express.static('view'));
+app.use(express.static(path.join(__dirname, 'public')));
+app.get('/', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'html', 'index.html'));
+});
 
 sequelize.sync()
     .then(()=>{

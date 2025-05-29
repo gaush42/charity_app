@@ -1,34 +1,102 @@
-const { Donation, Organisation } = require('../models');
-// Placeholder for actual integration
-const { processPayment } = require('../services/cashfree.service');
+const { Cashfree } = require('cashfree-pg');
+const { Project, Donation, User, Organization } = require('../model');
+const sequelize = require('../config/db');
+require("dotenv").config();
 
-exports.donateToOrganisation = async (req, res) => {
-  const { amount } = req.body;
-  const { orgId } = req.params;
+const cashfree = new Cashfree(Cashfree.SANDBOX, process.env.CASHFREE_APP_ID, process.env.CASHFREE_SECRET_KEY);
 
-  const organisation = await Organisation.findByPk(orgId);
-  if (!organisation || !organisation.isApproved) return res.status(404).json({ message: 'Organisation not found' });
+exports.donateToProject = async (req, res) => {
+  const userId = req.userId;
+  const email = req.email;
+  const { projectId, amount } = req.body;
 
-  const donation = await Donation.create({
-    amount,
-    status: 'PENDING',
-    UserId: req.user.userId,
-    OrganisationId: orgId
-  });
+  if (!projectId || !amount || amount <= 0) {
+    return res.status(400).json({ message: "Project ID and valid amount required" });
+  }
 
-  // Integrate with Cashfree or simulate payment
-  const paymentResult = await processPayment(donation.id, amount);
-  donation.status = paymentResult.success ? 'SUCCESSFUL' : 'FAILED';
-  donation.receiptUrl = paymentResult.receiptUrl;
-  await donation.save();
+  const t = await sequelize.transaction();
 
-  res.json({ message: 'Donation processed', donation });
+  try {
+    const project = await Project.findByPk(projectId, { include: Organization });
+
+    if (!project) {
+      return res.status(404).json({ message: "Project not found" });
+    }
+
+    const orgId = project.orgId;
+    const orderId = `donation_${Date.now()}`;
+
+    const request = {
+      order_id: orderId,
+      order_amount: amount,
+      order_currency: "INR",
+      customer_details: {
+        customer_id: `user_${userId}`,
+        customer_email: email,
+        customer_phone: "9999999999"
+      },
+      order_meta: {
+        return_url: `http://yourdomain.com/html/thankyou.html?order_id=${orderId}`,
+        notify_url: `http://yourdomain.com/api/donation/webhook`,
+        payment_methods: "cc,dc,upi"
+      }
+    };
+
+    const response = await cashfree.PGCreateOrder(request);
+
+    await Donation.create({
+      transactionId: response.data.payment_session_id,
+      paymentStatus: "PENDING",
+      amount,
+      userId,
+      orgId,
+      projectId
+    }, { transaction: t });
+
+    await t.commit();
+    res.status(201).json({
+      message: "Donation initiated",
+      paymentSessionId: response.data.payment_session_id
+    });
+
+  } catch (err) {
+    await t.rollback();
+    console.error(err);
+    res.status(500).json({ message: "Donation initiation failed", error: err.message });
+  }
 };
 
-exports.getReceipt = async (req, res) => {
-  const donation = await Donation.findByPk(req.params.id);
-  if (!donation || donation.UserId !== req.user.userId) return res.status(403).json({ message: 'Forbidden' });
+exports.handleDonationWebhook = async (req, res) => {
+  try {
+    const { order_id, payment_status, payment_info } = req.body.data.payment;
+    const paymentSessionId = payment_info.payment_session_id;
 
-  // You could send a file or just the URL
-  res.json({ receiptUrl: donation.receiptUrl });
+    const donation = await Donation.findOne({ where: { transactionId: paymentSessionId } });
+    if (!donation) {
+      return res.status(404).json({ success: false, message: "Donation record not found" });
+    }
+
+    // Idempotency check
+    if (donation.paymentStatus === 'SUCCESS' || donation.paymentStatus === 'FAILED') {
+      return res.status(200).json({ message: "Already processed" });
+    }
+
+    donation.paymentStatus = payment_status;
+    await donation.save();
+
+    if (payment_status === 'SUCCESS') {
+      // Optional: update project’s amountRaised
+      const project = await Project.findByPk(donation.projectId);
+      if (project) {
+        project.amountRaised += donation.amount;
+        await project.save();
+      }
+    }
+
+    res.status(200).json({ success: true });
+
+  } catch (err) {
+    console.error("Donation Webhook Error:", err);
+    res.status(500).json({ success: false });
+  }
 };
