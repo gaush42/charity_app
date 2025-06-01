@@ -74,3 +74,24 @@ exports.getAllOrgs = async (req, res) => {
     });
   }
 };
+exports.getOrgs = async (req, res) => {
+  try {
+    const orgId = req.orgId; // should be set in authenticate middleware for orgs
+    const isOrg = req.isOrg;
+    //console.log(orgId)
+    if(!isOrg){
+        return res.status(401).json({message: 'You are not an Organization'})
+    }
+    const organization = await Organization.findByPk(orgId);
+    if (!organization) {
+      return res.status(404).json({ message: "Organization not found" });
+    }
+    res.status(200).json({ message: "Profile", organization });
+  } catch (err) {
+    res.status(500).json({
+      message: 'Failed to retrieve organizations',
+      error: err.message
+    });
+  }
+};
+

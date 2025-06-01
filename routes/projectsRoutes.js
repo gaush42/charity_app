@@ -4,7 +4,7 @@ const {getAllProjects, getOrgProjects, createProject, updateProject, deleteProje
 const { authenticate } = require('../middleware/authJWT');
 
 // Public
-router.get('/getall', getAllProjects);
+router.get('/all', getAllProjects);
 
 router.use(authenticate);
 // Protected (org only)

@@ -18,10 +18,11 @@ const PORT = process.env.PORT || 3000
 app.use(express.json());
 app.use(express.urlencoded({ extended: true}))
 
-app.use((req, res, next) => {
+/*app.use((req, res, next) => {
   console.log(`[${req.method}] ${req.originalUrl}`);
   next();
-});
+});*/
+//app.use(express.static(path.join(__dirname, 'public')));
 
 //app.get('/', (req, res) => res.send('Charity Donation Platform API Running'));
 app.use('/api/auth', authRoute)
@@ -32,11 +33,7 @@ app.use('/api/donation', donationRoute)
 app.use('/api/user', userRoute)
 
 
-//app.use(express.static('view'));
-app.use(express.static(path.join(__dirname, 'public')));
-app.get('/', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'html', 'index.html'));
-});
+app.use(express.static('public'));
 
 sequelize.sync()
     .then(()=>{

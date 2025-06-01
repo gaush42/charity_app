@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>User Profile</title>
+  <link rel="stylesheet" href="/css/user-profile.css">
+  <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+</head>
+<body>
+  <!-- Header -->
+  <header>
+    <div class="container nav">
+      <div class="logo">CharityApp</div>
+      <nav id="nav-menu">
+        <a href="/index.html">Home</a>
+        <a href="/html/organization.html">Organization</a>
+        <a href="/html/projects.html">Project</a>
+        <a href="/html/user-auth.html">Signup</a>
+        <a href="/html/user-auth.html">Login</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="container">
+    <section id="donationSection" class="card">
+      <h2>Your Donations</h2>
+      <div class="table-wrapper">
+        <table>
+          <thead>
+            <tr>
+              <th>Amount</th>
+              <th>Organization</th>
+              <th>Project</th>
+              <th>Date</th>
+            </tr>
+          </thead>
+          <tbody id="donationTableBody"></tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+
+  <script src="/js/user-profile.js"></script>
+  <script src="/js/index.js"></script>
+</body>
+</html>

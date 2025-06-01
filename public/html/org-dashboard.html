@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Organization Dashboard</title>
+  <link rel="stylesheet" href="/css/org-dashboard.css" />
+  <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+</head>
+<body>
+  <!-- Header -->
+  <header>
+    <div class="container nav">
+      <div class="logo">CharityApp</div>
+      <nav id="nav-menu">
+        <a href="/index.html">Home</a>
+        <a href="/html/organization.html">Organization</a>
+        <a href="/html/projects.html">Project</a>
+        <a href="/html/user-auth.html">Signup</a>
+        <a href="/html/user-auth.html">Login</a>
+      </nav>
+    </div>
+  </header>
+
+  <!-- Main Dashboard Layout -->
+  <div class="dashboard-container">
+    <aside class="sidebar card">
+      <h2>Dashboard</h2>
+      <button onclick="loadProfile()">View Profile</button>
+      <button onclick="loadDonations()">View Donations</button>
+      <button onclick="loadProjects()">Manage Projects</button>
+    </aside>
+
+    <main class="main-content card">
+      <div id="contentArea">
+        <!-- Dynamic content goes here -->
+        <p>Select an option from the sidebar to view content.</p>
+      </div>
+    </main>
+  </div>
+
+  <script src="/js/org-dashboard.js"></script>
+  <script src="/js/index.js"></script>
+</body>
+</html>

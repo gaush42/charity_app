@@ -139,7 +139,7 @@ exports.LoginOrg = async (req, res) => {
             })
         }
         const token = jwt.sign(
-            {OrgId: Org.id, isOrg: true},
+            {orgId: Org.id, isOrg: true},
             process.env.JWT_SECRET,
             {expiresIn: '7h'}
         )

@@ -5,7 +5,7 @@ require("dotenv").config();
 
 const cashfree = new Cashfree(Cashfree.SANDBOX, process.env.CASHFREE_APP_ID, process.env.CASHFREE_SECRET_KEY);
 
-exports.donateToProject = async (req, res) => {
+/*exports.donateToProject = async (req, res) => {
   const userId = req.userId;
   const email = req.email;
   const { projectId, amount } = req.body;
@@ -64,7 +64,7 @@ exports.donateToProject = async (req, res) => {
     console.error(err);
     res.status(500).json({ message: "Donation initiation failed", error: err.message });
   }
-};
+};*/
 
 exports.handleDonationWebhook = async (req, res) => {
   try {
@@ -100,3 +100,53 @@ exports.handleDonationWebhook = async (req, res) => {
     res.status(500).json({ success: false });
   }
 };
+
+
+exports.donateToProject = async (req, res) => {
+  const userId = req.userId;
+  const { projectId, amount } = req.body;
+
+  if (!projectId || !amount || amount <= 0) {
+    return res.status(400).json({ message: "Project ID and valid amount required" });
+  }
+
+  const t = await sequelize.transaction();
+
+  try {
+    const project = await Project.findByPk(projectId);
+    if (!project) {
+      return res.status(404).json({ message: "Project not found" });
+    }
+
+    const orgId = project.orgId;
+    const fakeTransactionId = `fake_txn_${Date.now()}`;
+
+    // Create donation as if it were successful
+    const donation = await Donation.create({
+      transactionId: fakeTransactionId,
+      paymentStatus: "SUCCESS",
+      amount,
+      userId,
+      orgId,
+      projectId
+    }, { transaction: t });
+
+    // Simulate updating the amount raised
+    project.amountRaised += amount;
+    await project.save({ transaction: t });
+
+    await t.commit();
+
+    return res.status(201).json({
+      message: "Fake donation successful",
+      donationId: donation.id,
+      fakeTransactionId
+    });
+
+  } catch (err) {
+    await t.rollback();
+    console.error("Fake Donation Error:", err);
+    return res.status(500).json({ message: "Donation failed", error: err.message });
+  }
+};
+

@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Admin Dashboard</title>
+  <link rel="stylesheet" href="/css/admin.css">
+  <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+</head>
+<body>
+  <header>
+    <div class="logo">CharityApp Admin</div>
+    <nav>
+      <a href="/index.html">Home</a>
+      <a href="#" onclick="logout()">Logout</a>
+    </nav>
+  </header>
+
+  <main>
+    <h1>Admin Dashboard</h1>
+    <section id="summary"></section>
+
+    <section>
+      <h2>Pending Organizations</h2>
+      <div id="pending-orgs" class="grid"></div>
+    </section>
+
+    <section>
+      <h2>All Organizations</h2>
+      <div id="all-orgs" class="grid"></div>
+    </section>
+
+    <section>
+      <h2>All Projects</h2>
+      <div id="all-projects" class="grid"></div>
+    </section>
+
+    <section>
+      <h2>All Users</h2>
+      <div id="all-users" class="grid"></div>
+    </section>
+
+    <section>
+      <h2>All Donations</h2>
+      <div id="all-donations" class="grid"></div>
+    </section>
+  </main>
+
+  <script src="/js/admin.js"></script>
+</body>
+</html>

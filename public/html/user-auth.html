@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>User Auth</title>
+  <link rel="stylesheet" href="/css/auth.css">
+</head>
+<body>
+  <div class="container">
+    <div class="left">
+      <h1>User Portal</h1>
+      <button onclick="toggleForm()">Switch to <span id="toggleLabel">Signup</span></button>
+      <p><a href="org-auth.html">Login/Signup as Organization</a></p>
+    </div>
+    <div class="right">
+      <form id="userForm">
+        <h2 id="formTitle">Login</h2>
+        <div id="signupFields" class="hidden">
+          <input type="text" name="fullname" placeholder="Full Name" />
+        </div>
+        <input type="email" name="email" placeholder="Email" required />
+        <input type="password" name="password" placeholder="Password" required />
+        <button type="submit">Submit</button>
+      </form>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+  <script src="/js/auth.js"></script>
+  <script>
+    setupAuthForm('user');
+  </script>
+</body>
+</html>
