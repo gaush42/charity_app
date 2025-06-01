@@ -222,6 +222,7 @@ async function loadProjects() {
     const formData = new FormData(e.target);
     const data = Object.fromEntries(formData.entries());
     data.isActive = formData.get('isActive') === 'on'; // checkbox handling
+    console.log(data);
     await axios.post(`${API_BASE_PRG}/create`, data, authHeaders());
     alert('Project created');
     loadProjects();
