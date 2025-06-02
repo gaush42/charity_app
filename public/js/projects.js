@@ -42,7 +42,7 @@ async function loadProjects() {
   }
 }
 
-async function donate(event, projectId) {
+/*async function donate(event, projectId) {
   event.preventDefault();
   const form = event.target;
   const amount = parseFloat(form.amount.value);
@@ -53,6 +53,26 @@ async function donate(event, projectId) {
     loadProjects(); // Refresh to update amountRaised
   } catch (err) {
     alert(err.response?.data?.message || 'Failed to donate');
+  }
+}*/
+async function donate(event, projectId) {
+  event.preventDefault();
+  const form = event.target;
+  const amount = parseFloat(form.amount.value);
+
+  try {
+    // Initiate donation (calls backend to get paymentSessionId)
+    const res = await axios.post(`${API_BASE}/donation/donate`, { projectId, amount }, authHeaders());
+
+    // Call Cashfree Checkout with returned session
+    const cashfree = Cashfree({ mode: "sandbox" }); // use "production" in live mode
+    cashfree.checkout({
+      paymentSessionId: res.data.paymentSessionId,
+      redirectTarget: "_self"
+    });
+
+  } catch (err) {
+    alert(err.response?.data?.message || 'Failed to initiate donation');
   }
 }
 

@@ -2,6 +2,7 @@ const express = require('express')
 const path = require('path')
 require('dotenv').config()
 const sequelize = require('./config/db')
+const cors = require('cors')
 
 const authRoute = require('./routes/authRoutes')
 const adminRoute = require('./routes/adminRoutes')
@@ -14,10 +15,9 @@ const app = express()
 
 const PORT = process.env.PORT || 3000
 
-
 app.use(express.json());
 app.use(express.urlencoded({ extended: true}))
-
+app.use(cors());
 /*app.use((req, res, next) => {
   console.log(`[${req.method}] ${req.originalUrl}`);
   next();

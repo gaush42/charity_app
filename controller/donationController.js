@@ -7,7 +7,7 @@ require("dotenv").config();
 
 const cashfree = new Cashfree(Cashfree.SANDBOX, process.env.CASHFREE_APP_ID, process.env.CASHFREE_SECRET_KEY);
 
-/*exports.donateToProject = async (req, res) => {
+exports.donateToProject = async (req, res) => {
   const userId = req.userId;
   const email = req.email;
   const { projectId, amount } = req.body;
@@ -38,8 +38,8 @@ const cashfree = new Cashfree(Cashfree.SANDBOX, process.env.CASHFREE_APP_ID, pro
         customer_phone: "9999999999"
       },
       order_meta: {
-        return_url: `http://yourdomain.com/html/thankyou.html?order_id=${orderId}`,
-        notify_url: `http://yourdomain.com/api/donation/webhook`,
+        return_url: `https://6ee8-103-135-228-225.ngrok-free.app/html/user-profile.html?order_id=${orderId}`,
+        notify_url: `https://6ee8-103-135-228-225.ngrok-free.app/api/donation/webhook`,
         payment_methods: "cc,dc,upi"
       }
     };
@@ -47,7 +47,7 @@ const cashfree = new Cashfree(Cashfree.SANDBOX, process.env.CASHFREE_APP_ID, pro
     const response = await cashfree.PGCreateOrder(request);
 
     await Donation.create({
-      transactionId: response.data.payment_session_id,
+      transactionId: orderId,
       paymentStatus: "PENDING",
       amount,
       userId,
@@ -66,14 +66,21 @@ const cashfree = new Cashfree(Cashfree.SANDBOX, process.env.CASHFREE_APP_ID, pro
     console.error(err);
     res.status(500).json({ message: "Donation initiation failed", error: err.message });
   }
-};*/
+};
 
 exports.handleDonationWebhook = async (req, res) => {
-  try {
-    const { order_id, payment_status, payment_info } = req.body.data.payment;
-    const paymentSessionId = payment_info.payment_session_id;
+  const t = await sequelize.transaction();
 
-    const donation = await Donation.findOne({ where: { transactionId: paymentSessionId } });
+  try {
+    const orderId = req.body.data.order.order_id;
+    console.log(req.body.data.order.order_id)
+    const paymentStatus = req.body.data.payment.payment_status;
+    console.log(`Order ID: ${orderId}, Payment Status: ${paymentStatus}`);
+
+    const donation = await Donation.findOne({
+      where: { transactionId: orderId }
+    });
+
     if (!donation) {
       return res.status(404).json({ success: false, message: "Donation record not found" });
     }
@@ -83,105 +90,50 @@ exports.handleDonationWebhook = async (req, res) => {
       return res.status(200).json({ message: "Already processed" });
     }
 
-    donation.paymentStatus = payment_status;
-    await donation.save();
+    if (paymentStatus === 'SUCCESS') {
+      donation.paymentStatus = 'SUCCESS';
+      await donation.save({ transaction: t });
+      const [project, user, org] = await Promise.all([
+        Project.findByPk(donation.projectId, { include: Organization, transaction: t }),
+        User.findByPk(donation.userId, { transaction: t }),
+        Organization.findByPk(donation.orgId, { transaction: t })
+      ]);
 
-    if (payment_status === 'SUCCESS') {
-      // Optional: update project’s amountRaised
-      const project = await Project.findByPk(donation.projectId);
       if (project) {
         project.amountRaised += donation.amount;
-        await project.save();
+        await project.save({ transaction: t });
       }
+
+      await t.commit();
+
+      // Send emails (outside transaction for safety)
+      try {
+        await sendDonationEmails(
+          org.email,
+          org.orgName,
+          project.title,
+          donation.amount,
+          user.email,
+          donation.transactionId
+        );
+      } catch (emailErr) {
+        console.error("Email send error:", emailErr.response?.body || emailErr.message);
+        // Do not rollback donation due to email failure
+      }
+    } else {
+      await t.commit(); // Even if failed, commit the status update
     }
 
     res.status(200).json({ success: true });
 
   } catch (err) {
+    await t.rollback();
     console.error("Donation Webhook Error:", err);
     res.status(500).json({ success: false });
   }
 };
 
-
 /*exports.donateToProject = async (req, res) => {
-  const userId = req.userId;
-  const { projectId, amount } = req.body;
-
-  if (!projectId || !amount || amount <= 0) {
-    return res.status(400).json({ message: "Project ID and valid amount required" });
-  }
-
-  const t = await sequelize.transaction();
-
-  try {
-    const project = await Project.findByPk(projectId, {
-      include: Organization
-    });
-    if (!project) {
-      return res.status(404).json({ message: "Project not found" });
-    }
-
-    const orgId = project.orgId;
-    const fakeTransactionId = `fake_txn_${Date.now()}`;
-
-    // Create donation as if it were successful
-    const donation = await Donation.create({
-      transactionId: fakeTransactionId,
-      paymentStatus: "SUCCESS",
-      amount,
-      userId,
-      orgId,
-      projectId
-    }, { transaction: t });
-
-    // Simulate updating the amount raised
-    project.amountRaised += amount;
-    await project.save({ transaction: t });
-
-    await t.commit();
-    console.log(
-      project.Organization?.email || "No Org Email",
-      project.title,
-      fakeTransactionId
-    );
-    //console.log(project.Organization.email,project.title,response.data.payment_session_id)
-    await sendEmail(
-      project.Organization.email,
-      `New Donation to ${project.title}`,
-      `<p>Hello <b>${project.Organization.orgName}</b>,</p>
-      <p>You have received a new donation:</p>
-      <ul>
-        <li>Amount: ₹${amount}</li>
-        <li>Project: ${project.title}</li>
-        <li>Donor: ${email}</li>
-      </ul>
-      <p>Login to your dashboard for more info.</p>`
-    );
-
-    await sendEmail(
-      email,
-      `Thank you for your donation!`,
-      `<p>Hello,</p>
-      <p>We appreciate your ₹${amount} donation to <b>${project.title}</b> under <b>${project.Organization.orgName}</b>.</p>
-      <p>Transaction ID: <b>${fakeTransactionId}</b></p>
-      <p>Thank you for supporting a great cause!</p>`
-    );
-
-    return res.status(201).json({
-      message: "Fake donation successful",
-      donationId: donation.id,
-      fakeTransactionId
-    });
-
-  } catch (err) {
-    await t.rollback();
-    console.error("Fake Donation Error:", err);
-    return res.status(500).json({ message: "Donation failed", error: err.message });
-  }
-};*/
-
-exports.donateToProject = async (req, res) => {
   const userId = req.userId;
   const { projectId, amount } = req.body;
 
@@ -247,7 +199,7 @@ exports.donateToProject = async (req, res) => {
     console.error("Fake Donation Error:", err);
     return res.status(500).json({ message: "Donation failed", error: err.message });
   }
-};
+};*/
 const sendDonationEmails = async (orgEmail, orgName, projectTitle, amount, userEmail, transactionId) => {
   const client = Sib.ApiClient.instance;
   client.authentications['api-key'].apiKey = process.env.SIB_API_KEY;
