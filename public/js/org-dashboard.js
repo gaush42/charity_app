@@ -33,30 +33,8 @@ function authHeaders() {
 async function loadProfile() {
   try {
     const res = await axios.get(`${API_BASE_ORG}/profile`, authHeaders());
-    const profile = res.data.organization; // <-- Corrected here
+    const profile = res.data.organization;
 
-    /*content.innerHTML = `
-      <h2>Update Profile</h2>
-      <form id="profileForm">
-        <input name="orgName" placeholder="Organization Name" value="${profile.orgName || ''}" />
-        <select name="category">
-          <option value="Education" ${profile.category === 'Education' ? 'selected' : ''}>Education</option>
-          <option value="Healthcare" ${profile.category === 'Healthcare' ? 'selected' : ''}>Healthcare</option>
-          <option value="Environment" ${profile.category === 'Environment' ? 'selected' : ''}>Environment</option>
-          <option value="Animal Welfare" ${profile.category === 'Animal Welfare' ? 'selected' : ''}>Animal Welfare</option>
-          <option value="Disaster Relief" ${profile.category === 'Disaster Relief' ? 'selected' : ''}>Disaster Relief</option>
-          <option value="Women Empowerment" ${profile.category === 'Women Empowerment' ? 'selected' : ''}>Women Empowerment</option>
-          <option value="Rural Development" ${profile.category === 'Rural Development' ? 'selected' : ''}>Rural Development</option>
-        </select>
-        <input name="state" placeholder="State" value="${profile.state || ''}" />
-        <input name="city" placeholder="City" value="${profile.city || ''}" />
-        <input name="district" placeholder="District" value="${profile.district || ''}" />
-        <input name="locality" placeholder="Locality" value="${profile.locality || ''}" />
-        <input name="pin" placeholder="PIN Code" type="number" value="${profile.pin || ''}" />
-        <textarea name="description" placeholder="Description">${profile.description || ''}</textarea>
-        <button type="submit">Update</button>
-      </form>
-    `;*/
     content.innerHTML = `
       <h2 class="section-title">Update Profile</h2>
       <form id="profileForm" class="form">

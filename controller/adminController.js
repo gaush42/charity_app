@@ -1,6 +1,8 @@
 const { User, Organization, Project, Donation } = require('../model');
 const sequelize = require('../config/db');
-const { Op } = sequelize;
+const Sib = require('sib-api-v3-sdk');
+require("dotenv").config();
+
 
 // Get all organizations pending approval
 exports.getPendingOrganizations = async (req, res) => {
@@ -21,6 +23,11 @@ exports.approveOrganization = async (req, res) => {
 
     org.isApproved = true;
     await org.save();
+    sendStatusEmails(
+      org.email,
+      org.orgName,
+      'Approved'
+    )
 
     res.json({ message: 'Organization approved', org });
   } catch (err) {
@@ -33,7 +40,11 @@ exports.rejectOrganization = async (req, res) => {
   try {
     const org = await Organization.findByPk(req.params.id);
     if (!org) return res.status(404).json({ message: 'Organization not found' });
-
+    sendStatusEmails(
+      org.email,
+      org.orgName,
+      'Rejected'
+    )
     await org.destroy();
     res.json({ message: 'Organization rejected and removed' });
   } catch (err) {
@@ -143,4 +154,26 @@ exports.getAdminDashboardStats = async (req, res) => {
   } catch (err) {
     res.status(500).json({ message: 'Error fetching dashboard stats', error: err.message });
   }
+};
+const sendStatusEmails = async (orgEmail, orgName, status) => {
+  const client = Sib.ApiClient.instance;
+  client.authentications['api-key'].apiKey = process.env.SIB_API_KEY;
+
+  const transEmailApi = new Sib.TransactionalEmailsApi();
+
+  const sender = {
+    email: 'aahil5074@gmail.com', // Must be a verified sender in Brevo
+    name: 'Charity Donation Platform'
+  };
+
+  // Email to Organization
+  await transEmailApi.sendTransacEmail({
+    sender,
+    to: [{ email: orgEmail }],
+    subject: 'Approval Status',
+    htmlContent: `
+      <p>Hello <b>${orgName}</b>,</p>
+      <p>You Organization has been ${status}. Please email us for more detail</p>
+    `
+  });
 };

@@ -7,7 +7,7 @@ window.addEventListener('DOMContentLoaded', async () => {
 function setupNavigation() {
   const token = localStorage.getItem('token');
   const userName = localStorage.getItem('userName');
-  const isOrg = localStorage.getItem('isOrg') === 'true';
+  //const isOrg = localStorage.getItem('isOrg') === 'true';
 
   const nav = document.querySelector('header nav');
   nav.innerHTML = `

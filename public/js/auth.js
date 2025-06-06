@@ -59,6 +59,7 @@ function toggleFieldsetState(container, enabled) {
     }
   });
 }*/
+
 function setupAuthForm(type) {
   const form = document.querySelector('form');
   const API_BASE = 'http://localhost:3000/api/auth';
