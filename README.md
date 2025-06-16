@@ -30,7 +30,7 @@ A secure and scalable Node.js-based backend API that allows users to donate to s
 ---
 
 ## 📁 Project Structure
-
+```
 ├── config/ # Sequelize & environment config
 ├── controllers/ # Route handlers
 ├── middleware/ # JWT auth middleware
@@ -38,13 +38,15 @@ A secure and scalable Node.js-based backend API that allows users to donate to s
 ├── routes/ # Express route definitions
 ├── utils/ # Email sending helpers, etc.
 ├── public/ # Frontend.
+```
 
 ## Install Dependencies
 ```npm install```
 
 ## Configure Environment Variables
 Create a .env file in the root:
-```PORT=5000
+```
+PORT=5000
 DB_HOST=localhost
 DB_NAME=your_db_name
 DB_USER=your_mysql_user
@@ -53,4 +55,8 @@ DB_PASS=your_mysql_password
 JWT_SECRET=your_jwt_secret
 CASHFREE_APP_ID=your_cashfree_app_id
 CASHFREE_SECRET_KEY=your_cashfree_secret
-SIB_API_KEY=your_brevo_api_key```
+SIB_API_KEY=your_brevo_api_key
+```
+
+## Start the Server
+```npm run dev```
